@@ -5,24 +5,23 @@ in :mod:`kep.tables`.
 
 :mod:`kep.tables` relies on two global variables from :mod:`kep.spec`:
     
-   - **UNITS** (dict) is a mapper dictionary to extract units of measurement 
-from table headers. It applies to all of CSV file. 
+    - **UNITS** (dict) is a mapper dictionary to extract units of measurement 
+      from table headers. It applies to all of CSV file. 
      
-   - **SPEC** (:class:`kep.spec.Specification`) contains parsing instructions 
-by segment of CSV file:
+    - **SPEC** (:class:`kep.spec.Specification`) contains parsing instructions 
+      by segment of CSV file:
        
        - segment start and end line 
        - header strings to match with variable name 
        - (optional) reader function name to extract data from ununsual tables 
    
- **SPEC** is constructed from main (default) and auxillary 
- :class:`kep.spec.Definition` instances, while :class:`kep.spec.Definition` 
- is basically a list of :class:`kep.spec.Indicator` instances with 
- start and end line strings, which delimit CSV file segment.   
+**SPEC** is constructed from main (default) and auxillary 
+:class:`kep.spec.Definition` instances, while :class:`kep.spec.Definition` 
+is basically a list of :class:`kep.spec.Indicator` instances with 
+start and end line strings, which delimit CSV file segment.   
  
- :class:`kep.spec.Indicator` holds variable name, text string(s) to match in 
- table header to locate this indicator and (...)
- 
+:class:`kep.spec.Indicator` holds variable name, text string(s) to match in 
+table header to locate this indicator and (...)
         
 Notes:
     
@@ -35,7 +34,7 @@ Notes:
   retrieved by :method:`kep.spec.Specification.get_main_parsing_definition`
      
 - `kep.spec.Specification.get_additional_parsing_definitions` provides 
-   segment parsing defintions 
+  segment parsing defintions 
  
    
 Previously **UNITS** and **SPEC** were initialised based on yaml file, but this 
