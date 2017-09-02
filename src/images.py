@@ -74,7 +74,16 @@ class GraphBase:
         if not self.axis_on:
             plt.axis('off')
         return fig
+    
+    def save(self, folder=None):
+        pass
 
+    def get_path(self):
+        # a stub
+        return __file__
+
+    def show(self):
+        pass
 
 class Spline(GraphBase):
     def __init__(self, tss):
