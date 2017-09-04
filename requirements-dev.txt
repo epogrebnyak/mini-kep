@@ -1,0 +1,5 @@
+sphinx
+invoke
+pytest
+codecov
+pytest-cov
