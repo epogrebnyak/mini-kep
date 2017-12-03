@@ -8,14 +8,14 @@ from config import (find_repo_root, supported_dates,
                     Latest, get_latest_date)
 
 
-#HS: tests for the supported_dates added, the ones from 
-#    the old DateHelper module removed
-# FIXME: this can be combined in class Test_supported_dates 
-def test_supported_dates_starts_in_2009_4():
-    assert supported_dates()[0] == (2009, 4)
+#HS: tests for the supported_dates combined in a class 
+class Test_supported_dates(): 
+    
+    def test_supported_dates_starts_in_2009_4(self):
+        assert supported_dates()[0] == (2009, 4)
 
-def test_supported_dates_excludes_2013_11():
-    assert (2013, 11) not in supported_dates()
+    def test_supported_dates_excludes_2013_11(self):
+        assert (2013, 11) not in supported_dates()
 
 # WONTFIX: what is happening in this test, why is it skipped? should this test be deleted?      
 #          the problem may be related to https://github.com/mini-kep/parser-rosstat-kep/issues/110 
