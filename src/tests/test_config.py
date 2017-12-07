@@ -73,7 +73,7 @@ class Test_LocalCSV():
 
     def test_processed_method_returns_df_a_q_m_csv(self):
         for freq in 'aqm':
-            expected_name = 'df' + freq + '.csv'
+            expected_name = 'df{}.csv'.format(freq)
             processed_csv = LocalCSV(2015, 5).processed(freq) 
             assert processed_csv.name == expected_name
 
@@ -86,7 +86,7 @@ class Test_Latest():
 
     def test_csv_method_returns_df_a_q_m_csv(self):
         for freq in 'aqm':
-            expected_name = 'df' + freq + '.csv'
+            expected_name = 'df{}.csv'.format(freq)
             Latest_csv = Latest.csv(freq)
             assert Latest_csv.name == expected_name
 
