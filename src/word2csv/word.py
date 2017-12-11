@@ -12,6 +12,7 @@ import csv
 import os
 
 ENCODING = 'utf8'
+from pywintypes import com_error
 
 # -------------------------------------------------------------------------------
 #
@@ -45,7 +46,12 @@ def close_ms_word(app):
 
 
 def open_doc(path, word):
-    word.Documents.Open(path)
+    try:
+        word.Documents.Open(path)
+    except com_error as e:
+        if e.excepinfo[5] == -2146823683:
+            print('\nCheck if word document document is not opened in word already\n')
+        raise e
     return word.ActiveDocument
 
 
@@ -222,5 +228,13 @@ def word2csv(year, month, force=False):
         folder_to_csv(folder=raw_folder, csv_filename=interim_csv.path)
     
 
+def yield_continuous_rows_to_csv(input_doc, output_csv):
+    table_rows = list(yield_continious_rows(input_doc))
+    with open(output_csv, 'w', newline='', encoding='utf-8') as csvfile:
+        spamwriter = csv.writer(csvfile, delimiter=' ')
+        for row in table_rows:
+            spamwriter.writerow(row)
+
+
 if __name__ == "__main__":
-    pass
+    yield_continuous_rows_to_csv(input_doc=os.getcwd() + '\\' + 'oper.doc', output_csv='oper_res.csv')
