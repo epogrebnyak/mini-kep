@@ -1,45 +1,38 @@
-# ----------------------------------------------------------------------------------------
-#
-# TODO - coverage of resulting frames by checkpoints 
-# https://github.com/mini-kep/parser-rosstat-kep/issues/151
-# 
-# Setting (specification - dataframes - checkpoints):
-#
-# - specification has requited labals for parsing, it is guaranteed that parsing results ('dataframes')
-#   have this set of labels 
-# - Validate(year, month).dfs has three dataframes with parsing results ('dataframes')
-# - we check them with checkpoints.validate() function using CHECKPOINTS datapoints
+"""Validate parsing result dataframe using checkpoints. 
+
+'Dataframes':
+ - parsing results ('dataframes') are guarnteed to have exactly same set of labels as parsing definition
+ - Validate(year, month).dfs has three dataframes with parsing results ('dataframes')
+
+'Checkpoints':
+- these are dictionaries with reference values for variables at all frequencies 
+- we employ a rather verbose way of contructing the, from dataframe printouts
+
+'Validation rules':
+- are all checkpoints found daatframes?
+- are all columns in dataframes covered by CHECKPOINTS?
+
+Risks: 
+ - not all indicators start in 1999, they need other checkpoints 
+ - checkpoints not strictly related to interim CSV values
+ - we employ just one control datapoint per time series to ensure data interity, may not be enough 
+
+# Related issues:
+#  - how many variables are parsed, how many time series are there is the dataset in total, by frequency
+
+"""
+
+from collections import namedtuple
+
 
 # How CHECKPOINTS are constructed?
-#  -  a checkpoint is basically a frequency-label--date-value dictionary
+#  -  a checkpoint is  a frequency-label--date-value dictionary
 #  -  there are several ways to define uch dictionaries, most explcicit is just a hardcoded constant
 #     (in fact that was tried in some branches of repo)
 #  -  we need a lot of chekpoints and some rather visual way of editing them
-#  -  given this the checkpoints.CHECKPOINTS are constructued manually just using a printout (repr) of dataframes 
-#     while this may not be the best way to construct a checkpoint, it is rather verbose.
+#  -  we use a printout (repr) of dataframes  while this may not be the best way to construct a checkpoint, it is rather verbose.
 #  -  the problem I see is that the variables that do not have a 1999 value, which start observationlater (eg INDPRO, PPI, some others)
 #  -  another problem is that we just copy an occasional parsing result to CHEKCPOINTS, not really looking at CSV file 
-#     is it is really the value in original data source
-
-# Risks:
-# - dataframes may have parsing results not covered by checkpoints
-# - not all indicators start in 1999, they need other checkpoints 
-# - checkpoints not strictly related to interim CSV values
-# - we employ just one control datapoint per time series to ensure data interity, may not be enough to stay sure
-
-# Immediate tasks:
-#  - are all columns in dataframes covered by CHECKPOINTS? (uncovered time series / columns names) - moe important
-#  - what are values in CHECKPOINTS that are not in dataframes? (unused checkpoints) - less important
-
-
-# ----------------------------------------------------------------------------------------
-#
-# Related issues:
-#  - how many variables are parsed, how many time sseries are there is the dataset in total, by ferequncy
-#  - should speciifation include control datapoints?#
-#
-# ----------------------------------------------------------------------------------------
-from collections import namedtuple
 
 ANNUAL_STR = """
 year                                1999.0
@@ -167,20 +160,6 @@ WAGE_REAL_yoy                         58.6
 from numpy import isnan
 
 
-def from_year(year):
-    return str(int(year))
-
-
-def from_month(year, month):
-    year, month = int(year), int(month)
-    return f'{year}-{month}'
-
-
-def from_qtr(year, qtr):
-    month = qtr * 3
-    return from_month(year, month)
-
-
 def as_dict(s: str):
     """Convert dataframe printout string to dictionary."""
     result = {}
@@ -192,43 +171,64 @@ def as_dict(s: str):
     return result
 
 
-def extract_date(d):
-    """
-    """
-    # onkery: Using `get` instead of `pop` to avoid false
-    # positives during validation.
-    year = int(d.get('year'))
+def from_year(year: str):
+    return str(int(year))
+
+assert from_year(1999.0) == '1999'
+
+
+def from_month(year, month):
+    year, month = int(year), int(month)
+    return f'{year}-{month}'
+
+
+def from_qtr(year, qtr):
+    month = int(qtr) * 3
+    return from_month(year, month)
+
+
+def extract_date_and_frequency(d: dict):
+    """Return date and string from dictionary."""
+    year = d.get('year')
     if 'month' in d.keys():
-        month = int(d.get('month'))
-        return from_month(year, month)
+        month = d.get('month')
+        return from_month(year, month), 'm'
     elif 'qtr' in d.keys():
-        qtr = int(d.get('qtr'))
-        return from_qtr(year, qtr)
+        qtr = d.get('qtr')
+        return from_qtr(year, qtr), 'q'
     else:
-        return from_year(year)
+        return from_year(year), 'a'
 
 
-Checkpoint = namedtuple("Checkpoint", ["date", "name", "value"])
+Checkpoint = namedtuple("Checkpoint", ["date", "freq", "name", "value"])
 
 
-def as_checkpoints(text):
-    d = as_dict(text)
-    return [Checkpoint(date=extract_date(d),
-                       name=name,
-                       value=d[name]) for name in d.keys()]
+class CheckpointList:
+    """Converter for printout string to list of named tuples."""
+    def __init__(self, printout:str):
+        source_dict = as_dict(printout)
+        date, freq = extract_date_and_frequency(source_dict)
+        self._list = [Checkpoint(date, freq, name, value) 
+                      for name, value in source_dict.items()]
+
+    def __getitem__(self, i:int):
+        return self._list[i]
 
 
 CHECKPOINTS = dict(
-    a=as_checkpoints(ANNUAL_STR),
-    q=as_checkpoints(QTR_STR),
-    m=as_checkpoints(MONTHLY_STR)
+    a=CheckpointList(ANNUAL_STR),
+    q=CheckpointList(QTR_STR),
+    m=CheckpointList(MONTHLY_STR)
 )
 
-# NOT TODO: add q and m strings
-# onkery: Using stub values for now-absent optional checkpoints to
-# avoid awkward calls outside.
+
+# TODO (EP): add QTR_STR_2016
+# TODO (EP): add MONTH_STR_2016
+# TODO (EP): for optional checkpoints need textual description, eg. 
+#            "in releases prior to 2016 INDPRO and PPI is Nan, we check it 
+#             with additional values for 2016."
 OPTIONAL_CHECKPOINTS = dict(
-    a=as_checkpoints(ANNUAL_STR_2016),
+    a=CheckpointList(ANNUAL_STR_2016),
     q=[],
     m=[],
 )
@@ -244,59 +244,81 @@ def is_found(df, d):
         return False
 
 
+class ValidationError(ValueError):
+    pass
+
+
 def validate(df, checkpoints):
     """Validate dataframe *df* with list of dictionaries
        *checkpoints*.
     """
     missed = find_missed_checkpoints(df, checkpoints)
     if missed:
-        raise ValueError(f"Required checkpoints not found in dataframe: {missed}")
+        raise ValidationError(f"Required checkpoints not found in dataframe: {missed}")
 
     uncovered = find_uncovered_column_names(df, checkpoints)
     if uncovered:
-        raise ValueError(f"Variables not covered by checkpoints: {uncovered}")
+        raise ValidationError(f"Variables not covered by checkpoints: {uncovered}")
 
 
-def validate2(df, required_checkpoints, optional_checkpoints, strict_validation=False):
+def validate2(df, required_checkpoints, additional_checkpoints, strict=False):
     """
-    Validates given dataframe *df* against *required_checkpoints* and *optional_checkpoints*.
+    Validate dataframe *df* against *required_checkpoints* and *optional_checkpoints*. 
+    *strict* flag controls exception/warning handling. 
 
-    If any required checkpoint is missed, raises ValueError with missed checkpoints.
-    *strict_validation* flag controls validation strictness for optional checkpoints.
+    Step 1. Are all checkpoints found in frame?
 
-    After that function checks if dataframe *df* contains any variables which
-    are not covered by passed checkpoints (both required and optional).
+    There are required and optional (additional) checkpoints.  
+    We raise ValueError if any required checkpoint is missed.
+    
+    Step 2. Are there any dataframe columns not covered by non-Nan checkpoints?
+
+    Raise warning if dataframe *df* contains any variables which are not covered by
+    checkpoints (either required or optional).
 
     Args:
-        df: parsing result as Pandas dataframe
-        required_checkpoints: list of dictionaries with required checkpoints
-        optional_checkpoints: list of dictionaries with optional checkpoints
-        strict_validation: if set, function raises exception on any missed
+        df: parsing result as pandas dataframe
+        required_checkpoints(list of dictionaries): required checkpoints
+        additional_checkpoints(list of dictionaries): optional checkpoints
+        strict(bool): if True raise exceptions for warnings
         optional checkpoint and only shows warning otherwise
 
-    Returns:
-        None
+    Raises:
+        Error or warning on unexpected result 
     """
+    freq = required_checkpoints[0].freq
+    
+    def echo(msg, strict):
+        if strict:
+            raise ValidationError(msg)
+        else:
+            # print is not blocking the flow in batch process
+            print(msg)
+
+    # this is "Step 1"
     missed_required = find_missed_checkpoints(df, required_checkpoints)
-    missed_optional = find_missed_checkpoints(df, optional_checkpoints)
+    missed_optional = find_missed_checkpoints(df, additional_checkpoints)
 
-    if missed_required or missed_optional and strict_validation:
-        missed = missed_required.union(missed_optional)
-        raise ValueError(f"Checkpoints not found in dataframe: {missed}")
+    if missed_required:
+        msg = f"Required checkpoints not found in dataframe: {missed_required}"
+        echo(msg, True)
+    if missed_optional:
+        msg = f"Optional checkpoints not found in dataframe: {missed_optional}"
+        echo(msg, strict)
 
-    if missed_optional and not strict_validation:
-        raise RuntimeWarning(f"Optional checkpoints not found in dataframe: {missed_optional}")
-
+    # this is "Step 2" 
     uncovered_required = find_uncovered_column_names(df, required_checkpoints)
-    uncovered_optional = find_uncovered_column_names(df, optional_checkpoints)
-
-    # onkery: `intersection` here because we need to find columns which
-    # are not covered by both required AND optional checkpoints.
-    uncovered = uncovered_required.intersection(uncovered_optional)
+    uncovered_optional = find_uncovered_column_names(df, additional_checkpoints)
 
     # ensure a variable in dataframe is covered by at least one checkpoint
+    # we use `intersection` here because we need to find columns which
+    # are not covered by both required AND optional checkpoints
+    # if both of them miss the column, it is uncovered
+    uncovered = uncovered_required.intersection(uncovered_optional)
     if uncovered:
-        raise ValueError(f"Variables not covered by checkpoints: {uncovered}")
+        msg = (f'Variables in dataframe not covered by checkpoints {uncovered}'
+               f' at frequency <{freq}>.')
+        echo(msg, strict)
 
 
 def find_missed_checkpoints(df, checkpoints):
@@ -308,7 +330,7 @@ def find_missed_checkpoints(df, checkpoints):
         checkpoints: list of dictionaries
 
     Returns:
-        subset of *checkpoints* not found in dataframe *df*
+        list *checkpoints* not found in dataframe *df*
     """
     return {c for c in checkpoints if not is_found(df, c)}
 
