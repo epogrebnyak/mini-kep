@@ -34,7 +34,7 @@ def create_base_dataframe(datapoints, freq):
     return df
 
 
-def create_dfa(datapoints):
+def create_dfa(datapoints): #не совсем понятна разница между этими тремя методами, что `a`, `q`, `m` означают?
     df = create_base_dataframe(datapoints, 'a')
     return rename_accum(df)
 
@@ -100,7 +100,7 @@ if __name__ == '__main__':
     from reader import to_values
     from parsing_definition import NAMERS, UNITS
     from dev_helper import PATH
-    filename = str(pathlib.Path(__file__).with_name('tab.csv'))
+    filename = str(pathlib.Path(__file__).with_name('tab.csv')) # не вижу что это где-то используется
     values = to_values(PATH, UNITS, NAMERS)
     dfa, dfq, dfm = unpack_dataframes(values)
     dfs = to_dataframes(values)
