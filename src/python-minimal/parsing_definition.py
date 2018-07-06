@@ -1,6 +1,7 @@
 from collections import OrderedDict
 
 # mapper dictionary to convert text in table headers to unit of measurement
+# я бы вынес UNITS и UNIT_NAMES в отдельный файл
 UNITS = OrderedDict([  # 1. MONEY
     ('млрд.долларов', 'bln_usd'),
     ('млрд. долларов', 'bln_usd'),
@@ -78,6 +79,7 @@ UNIT_NAMES = {'bln_rub': 'млрд.руб.',
 # validation: all units in mapper dict have an 'offical' name
 assert set(UNIT_NAMES.keys()) == set(UNITS.values())
 
+# я бы вытащил doc в отдельный файл, какой-нибудь doc.yml, сложно читать
 doc = """
 - name: GDP
   headers:
@@ -456,4 +458,4 @@ for p in PARSING_DEFINTIONS:
 
 NAMERS = [Namer(x['name'], x['headers'], x['units'],
                 x.get('starts'), x.get('ends'), x.get('reader'))
-          for x in yaml.load(doc)]
+          for x in yaml.load(doc)]# может PARSING_DEFINTIONS вместо повторного yaml.load(doc)
