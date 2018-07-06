@@ -12,7 +12,7 @@ PATH = str(datafolder / 'tab.csv')
 PATH_LEGACY = str(datafolder / 'tab_old.csv')
 
 
-def messup(values):
+def messup(values): # дублируется в dev_helper.py, я бы вынес в отдельный файл
     messed_years = set()
     messed_values = set()
     for v in to_values(PATH, UNITS, NAMERS):
@@ -33,13 +33,13 @@ def run_to_values():
     return to_values(PATH, UNITS, NAMERS)
 
 
-def run_bare_df():
+def run_bare_df(): # не используется нигде
     x = run_to_values()
     df = pd.DataFrame(x)
     df = df[df.freq == 'm']
 
 
-def create_df(x, freq):
+def create_df(x, freq): # тоже нигде не используется
     x = run_to_values()
     df = pd.DataFrame(x)
     df = df[df.freq == freq]
@@ -89,7 +89,7 @@ def timer():
 
 
 def replicate_dupl_error():
-    values = to_values(PATH, UNITS, NAMERS)
+    values = to_values(PATH, UNITS, NAMERS) # почему бы не заюзать run_to_values()?
     df = pd.DataFrame(values)
     dups = df[df.duplicated(keep=False)]
     print(dups)
