@@ -107,7 +107,7 @@ def make_label(name, unit):
     return '{}_{}'.format(name, unit)
 
 
-class Table:
+class Table: # я бы вынес в отдельный файл, большие файлы сложны для чтения.
     def __init__(self, headers, datarows, name=None, unit=None):
         self.headers = [x[0] for x in headers if x[0]]
         self.datarows = datarows
@@ -256,7 +256,8 @@ def put_readers(tables, namers):
                 table.assign_row_format(namer.reader)
 
 
-def parsed_tables(filename, unit_mapper_dict, namers):
+def parsed_tables(filename, unit_mapper_dict, namers): 
+    # результат этого метода никак не кешируется и за один запуск этот метод вызывается дважды
     tables = import_tables(filename)
     put_units(tables, unit_mapper_dict)
     put_names(tables, namers)
